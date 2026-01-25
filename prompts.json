@@ -1,0 +1,8 @@
+{
+  "InfoString": "Bot created by *Civer_mau*!\n\nSummarizes messages via DeepSeek API (I have to pay for that, please don't abuse it)\n\n*Commands:* \n- --summarize <number of messages> (Summarizes the last <number of messages> messages)\n- --info (Shows info about the bot)\n- --version (Shows the version of the bot)\n\n*Summarize Command Flags:*\n- --short (Creates a short summary)\n- --medium (Creates a medium-length summary - default)\n- --long (Creates a long, detailed summary)\n- --reason (Uses deepseek reasoning model, slower and very expensive, but can think better)\n\n*Examples:*\n- --summarize 50 --short (Summarize last 50 messages in short format)\n- -s 100 --long --reason (Summarize last 100 messages in long format using reasoning model)\n\n*Extras:*\nBancho can also send music as long as a message contains specific words!\n- Bancho, Pum x3\n- Bancho, lofi\n- Bancho, noises\nAlso can send stickers if you mention the bot with @bancho!\n\n> Check out the code: https://github.com/Civermau/Whatsapp-Summarizer-Bot-Go-Edition\n> Also check out my website: https://civermau.dev",
+  "VersionString": "*Bot version Beta 5.0.0!*\nDropped codebase and started from scratch!\nGet summaries, music, and stickers with bancho in the group chat!\n\n\n> Check out the code: https://github.com/Civermau/Whatsapp-Summarizer-Bot-Go-Edition\n> Also check out my website: https://civermau.dev",
+  "PersonalityPrompt": "test PersonalityPrompt",
+  "LengthShort": "test LengthShort",
+  "LengthMedium": "test LengthMedium",
+  "LengthLong": "test LengthLong"
+}
