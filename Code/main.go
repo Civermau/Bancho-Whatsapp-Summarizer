@@ -14,6 +14,9 @@ var (
 	GlobalPromptsConfig *PromptsConfig
 	GlobalClient        *whatsmeow.Client
 	GlobalAppDB         *AppDB
+	GlobalWhitelistCache *WhitelistCache
+	GlobalAliasCache     *AliasCache
+	GlobalImageDescriptionCache *ImageDescriptionCache
 )
 
 func main() {
@@ -35,6 +38,18 @@ func main() {
 	GlobalAppDB, err = OpenAppDB(ctx, "")
 	if err != nil {
 		panic("Failed to open database: " + err.Error())
+	}
+
+	// Initialize caches
+	GlobalWhitelistCache = &WhitelistCache{
+		groups: make(map[string]bool),
+		users:  make(map[string]bool),
+	}
+	GlobalAliasCache = &AliasCache{
+		aliases: make(map[string]string),
+	}
+	GlobalImageDescriptionCache = &ImageDescriptionCache{
+		descriptions: make(map[string]string),
 	}
 
 	GlobalClient, err = initializeClient(ctx)

@@ -85,6 +85,15 @@ func (a *AppDB) EnsureSchema(ctx context.Context) error {
 
 		CREATE INDEX IF NOT EXISTS idx_app_user_whitelist_sender_jid
 			ON app_user_whitelist(sender_jid);
+
+		-- Table for image cache --
+		CREATE TABLE IF NOT EXISTS app_image_cache (
+			id TEXT PRIMARY KEY,
+			description TEXT NOT NULL
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_app_image_cache 
+			ON app_image_cache(id)
 	`
 	_, err := a.db.ExecContext(ctx, schema)
 	return err
@@ -262,4 +271,47 @@ func (a *AppDB) RemoveUserFromWhitelist(ctx context.Context, senderJID string) e
 		`
 	_, err := a.db.ExecContext(ctx, query, senderJID)
 	return err
+}
+
+// --- Image Cache methods ---
+
+func (a *AppDB) AddImageDescription(ctx context.Context, id string, description string) error {
+	if a == nil || a.db == nil {
+		return errors.New("db is nil")
+	}
+	id = strings.TrimSpace(id)
+	description = strings.TrimSpace(description)
+	if id == "" || description == "" {
+		return errors.New("id and description are required")
+	}
+	query := `
+		INSERT INTO app_image_cache (id, description)
+		VALUES (?, ?)
+		ON CONFLICT(id) DO UPDATE SET
+			description = excluded.description
+	`
+	_, err := a.db.ExecContext(ctx, query, id, description)
+	return err
+}
+
+func (a *AppDB) GetImageDescription(ctx context.Context, id string) (string, error) {
+	if a == nil || a.db == nil {
+		return "", errors.New("db is nil")
+	}
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return "", errors.New("id is required")
+	}
+	var description string
+	query := `
+		SELECT description FROM app_image_cache WHERE id = ?
+	`
+	err := a.db.QueryRowContext(ctx, query, id).Scan(&description)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", sql.ErrNoRows
+	}
+	if err != nil {
+		return "", err
+	}
+	return description, nil
 }

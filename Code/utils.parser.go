@@ -89,6 +89,12 @@ func ParseMessageEvent(evt *events.Message) (*MessageContext, error) {
 
 	// Handle different media types
 	switch {
+	case evt.Message.StickerMessage != nil:
+		// Stickers are detected as images since they are webp
+		stk := evt.Message.StickerMessage
+		msg.MediaType = "image"
+		msg.MediaMeta = buildMediaMeta(stk.Mimetype, stk.FileLength, stk.MediaKey, stk.Width, stk.Height, nil)
+
 	case evt.Message.ImageMessage != nil:
 		img := evt.Message.ImageMessage
 		msg.MediaType = "image"
@@ -108,11 +114,6 @@ func ParseMessageEvent(evt *events.Message) (*MessageContext, error) {
 		doc := evt.Message.DocumentMessage
 		msg.MediaType = "document"
 		msg.MediaMeta = buildMediaMeta(doc.Mimetype, doc.FileLength, doc.MediaKey, nil, nil, nil)
-
-	case evt.Message.StickerMessage != nil:
-		stk := evt.Message.StickerMessage
-		msg.MediaType = "sticker"
-		msg.MediaMeta = buildMediaMeta(stk.Mimetype, stk.FileLength, stk.MediaKey, stk.Width, stk.Height, nil)
 
 	default:
 		msg.MediaType = "text"

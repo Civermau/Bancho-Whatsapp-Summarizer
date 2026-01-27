@@ -51,3 +51,8 @@ type AliasCache struct {
 	mu      sync.RWMutex
 	aliases map[string]string
 }
+
+type ImageDescriptionCache struct {
+	mu           sync.RWMutex
+	descriptions map[string]string
+}

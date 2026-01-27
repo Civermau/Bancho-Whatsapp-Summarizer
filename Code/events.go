@@ -24,7 +24,7 @@ func eventHandler(evt interface{}) {
 
 // ? --------------------------------------------------------------------------------------------------------
 // ? ----------------------------------------------Message Splitter------------------------------------------
-// ? -----------------------------------------------------------------------------------------------------
+// ? --------------------------------------------------------------------------------------------------------
 
 func splitMessages(ctx *MessageContext) {
 	switch ctx.MediaType {
@@ -54,16 +54,25 @@ func splitMessages(ctx *MessageContext) {
 
 // handleImageMessage handles incoming image messages.
 func handleImageMessage(ctx *MessageContext) {
-	// TODO: Process image message (e.g., save image info, respond, etc.)
+	fmt.Print("IMAGE DETECTED\n")
+	imageCache, err := isImageCached(GlobalImageDescriptionCache, ctx.MediaMeta.Hash, GlobalAppDB)
+	if err != nil {
+		// TODO: Send to api, then store
+		imageCache = "Placeholder" // ! placeholder, duh
+		err = setNewImageCache(GlobalImageDescriptionCache, ctx.MediaMeta.Hash, imageCache, GlobalAppDB)
+	}
+	// TODO: Store imageCache in db
 }
 
 // handleVideoMessage handles incoming video messages.
 func handleVideoMessage(ctx *MessageContext) {
+	fmt.Print("VIDEO DETECTED\n")
 	// TODO: Process video message (e.g., save video info, respond, etc.)
 }
 
 // handleAudioMessage handles incoming audio messages.
 func handleAudioMessage(ctx *MessageContext) {
+	fmt.Print("AUDIO DETECTED\n")
 	// TODO: Process audio message (e.g., transcribe, respond, etc.)
 }
 
@@ -73,7 +82,6 @@ func handleAudioMessage(ctx *MessageContext) {
 
 func handleTextMessage(ctx *MessageContext) {
 	selfID := GlobalClient.Store.LID.User + "@lid"
-	fmt.Printf("%s", selfID)
 
 	for _, mention := range ctx.Mentions {
 		if mention == selfID {
@@ -89,6 +97,7 @@ func handleCommands(ctx *MessageContext) {
 	switch words[0] {
 	case "-s", "--summarize":
 		fmt.Println("Summarize command detected!")
+		// TODO: IMPLEMENT SUMMARIZE LOGIC
 
 	// ? ===================================
 	case "-v", "--version":
@@ -145,7 +154,7 @@ func handleCommands(ctx *MessageContext) {
 	}
 }
 
-// ? ----------------------------------------------Alias Handler------------------------------------------
+// ? ----------------------------------------------Alias Handler----------------------------------------------
 func handleAliasCommand(ctx *MessageContext, words []string) {
 	if GlobalAppDB == nil {
 		SendTextMessage(GlobalClient, ctx.ChatID, "Database not initialized.")
@@ -169,7 +178,7 @@ func handleAliasCommand(ctx *MessageContext, words []string) {
 	SendReplyMessage(GlobalClient, ctx, "Alias has been saved.")
 }
 
-// ? ----------------------------------------------Config Handler------------------------------------------
+// ? ----------------------------------------------Config Handler----------------------------------------------
 func reloadConfigs() error {
 	var err error
 
