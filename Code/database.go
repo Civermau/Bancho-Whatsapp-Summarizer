@@ -54,6 +54,7 @@ func (a *AppDB) EnsureSchema(ctx context.Context) error {
 		return errors.New("db is nil")
 	}
 	const schema = `
+		-- Table for app_aliases (already existing) --
 		CREATE TABLE IF NOT EXISTS app_aliases (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			chat_jid TEXT NOT NULL,
@@ -93,7 +94,19 @@ func (a *AppDB) EnsureSchema(ctx context.Context) error {
 		);
 
 		CREATE INDEX IF NOT EXISTS idx_app_image_cache 
-			ON app_image_cache(id)
+			ON app_image_cache(id);
+
+		-- Table for MessageContext --
+		CREATE TABLE IF NOT EXISTS app_message_context (
+			message_id TEXT PRIMARY KEY NOT NULL,
+			media_description Text,
+			chat_id TEXT NOT NULL,
+			sender_name TEXT NOT NULL,
+			text TEXT
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_app_message_context_chat_id
+			ON app_message_context(chat_id);
 	`
 	_, err := a.db.ExecContext(ctx, schema)
 	return err
@@ -314,4 +327,73 @@ func (a *AppDB) GetImageDescription(ctx context.Context, id string) (string, err
 		return "", err
 	}
 	return description, nil
+}
+
+// --- Message Context methods ---
+
+func (a *AppDB) InsertMessageContext(ctx context.Context, messageID string, chatID string, senderName string, mediaDescription *string, text *string) error {
+	if a == nil || a.db == nil {
+		return errors.New("db is nil")
+	}
+	messageID = strings.TrimSpace(messageID)
+	chatID = strings.TrimSpace(chatID)
+	senderName = strings.TrimSpace(senderName)
+
+	if messageID == "" || chatID == "" || senderName == "" {
+		return errors.New("messageID, chatID and senderName are required")
+	}
+
+	query := `
+		INSERT INTO app_message_context (
+			message_id,
+			chat_id,
+			sender_name,
+			media_description,
+			text
+		)
+		VALUES (?, ?, ?, ?, ?)
+		ON CONFLICT(message_id) DO UPDATE SET
+			chat_id = excluded.chat_id,
+			sender_name = excluded.sender_name,
+			media_description = excluded.media_description,
+			text = excluded.text
+	`
+	_, err := a.db.ExecContext(ctx, query, messageID, chatID, senderName, mediaDescription, text)
+	return err
+}
+
+func (a *AppDB) UpdateMessageContextMediaDescription(ctx context.Context, messageID string, mediaDescription string) error {
+	if a == nil || a.db == nil {
+		return errors.New("db is nil")
+	}
+	messageID = strings.TrimSpace(messageID)
+	if messageID == "" {
+		return errors.New("messageID is required")
+	}
+
+	query := `
+		UPDATE app_message_context
+		SET media_description = ?
+		WHERE message_id = ?
+	`
+	_, err := a.db.ExecContext(ctx, query, mediaDescription, messageID)
+	return err
+}
+
+func (a *AppDB) UpdateMessageContextText(ctx context.Context, messageID string, text string) error {
+	if a == nil || a.db == nil {
+		return errors.New("db is nil")
+	}
+	messageID = strings.TrimSpace(messageID)
+	if messageID == "" {
+		return errors.New("messageID is required")
+	}
+
+	query := `
+		UPDATE app_message_context
+		SET text = ?
+		WHERE message_id = ?
+	`
+	_, err := a.db.ExecContext(ctx, query, text, messageID)
+	return err
 }
