@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -96,14 +97,16 @@ func (a *AppDB) EnsureSchema(ctx context.Context) error {
 		CREATE INDEX IF NOT EXISTS idx_app_image_cache 
 			ON app_image_cache(id);
 
+
 		-- Table for MessageContext --
 		CREATE TABLE IF NOT EXISTS app_message_context (
 			message_id TEXT PRIMARY KEY NOT NULL,
-			media_description Text,
-			chat_id TEXT NOT NULL,
 			sender_name TEXT NOT NULL,
-			text TEXT
-		);
+			chat_id TEXT NOT NULL,
+			text TEXT,
+			media_description Text,
+			timestamp DATETIME NOT NULL
+			);
 
 		CREATE INDEX IF NOT EXISTS idx_app_message_context_chat_id
 			ON app_message_context(chat_id);
@@ -331,7 +334,7 @@ func (a *AppDB) GetImageDescription(ctx context.Context, id string) (string, err
 
 // --- Message Context methods ---
 
-func (a *AppDB) InsertMessageContext(ctx context.Context, messageID string, chatID string, senderName string, mediaDescription *string, text *string) error {
+func (a *AppDB) InsertMessageContext(ctx context.Context, messageID string, chatID string, senderName string, mediaDescription *string, text *string, timestamp *time.Time) error {
 	if a == nil || a.db == nil {
 		return errors.New("db is nil")
 	}
@@ -349,16 +352,18 @@ func (a *AppDB) InsertMessageContext(ctx context.Context, messageID string, chat
 			chat_id,
 			sender_name,
 			media_description,
-			text
+			text,
+			timestamp
 		)
-		VALUES (?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(message_id) DO UPDATE SET
 			chat_id = excluded.chat_id,
 			sender_name = excluded.sender_name,
 			media_description = excluded.media_description,
-			text = excluded.text
+			text = excluded.text,
+			timestamp = excluded.timestamp
 	`
-	_, err := a.db.ExecContext(ctx, query, messageID, chatID, senderName, mediaDescription, text)
+	_, err := a.db.ExecContext(ctx, query, messageID, chatID, senderName, mediaDescription, text, timestamp)
 	return err
 }
 

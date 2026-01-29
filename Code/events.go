@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -54,14 +55,43 @@ func splitMessages(ctx *MessageContext) {
 
 // handleImageMessage handles incoming image messages.
 func handleImageMessage(ctx *MessageContext) {
-	fmt.Print("IMAGE DETECTED\n")
-	imageCache, err := isImageCached(GlobalImageDescriptionCache, ctx.MediaMeta.Hash, GlobalAppDB)
-	if err != nil {
-		// TODO: Send to api, then store
-		imageCache = "Placeholder" // ! placeholder, duh
-		err = setNewImageCache(GlobalImageDescriptionCache, ctx.MediaMeta.Hash, imageCache, GlobalAppDB)
+	description, err := isImageCached(GlobalImageDescriptionCache, ctx.MediaMeta.Hash, GlobalAppDB)
+	isCacheMiss := err != nil
+
+	if isCacheMiss {
+		description = "Processing image..."
+		_ = setNewImageCache(GlobalImageDescriptionCache, ctx.MediaMeta.Hash, description, GlobalAppDB)
+	} else {
+		description = "I was found in cache :D"
 	}
-	// TODO: Store imageCache in db
+
+	err = GlobalAppDB.InsertMessageContext(
+		context.Background(),
+		ctx.MessageID,
+		ctx.ChatID.String(),
+		ctx.SenderName,
+		&description,
+		nil,
+		&ctx.Timestamp,
+	)
+	if err != nil {
+		fmt.Printf("Failed to insert message context: %v\n", err)
+		return
+	}
+
+	if isCacheMiss {
+		go func(msgID string, imgHash string) {
+			time.Sleep(10 * time.Second)                  // TODO: This is a Dummy, implement API
+			apiResponse := "Hi, I'm the api, I'm so cool" // ! Dummy API responce
+
+			_ = setNewImageCache(GlobalImageDescriptionCache, imgHash, apiResponse, GlobalAppDB)
+
+			err := GlobalAppDB.UpdateMessageContextMediaDescription(context.Background(), msgID, apiResponse)
+			if err != nil {
+				fmt.Printf("Failed to update description: %v\n", err)
+			}
+		}(ctx.MessageID, ctx.MediaMeta.Hash)
+	}
 }
 
 // handleVideoMessage handles incoming video messages.
@@ -83,15 +113,35 @@ func handleAudioMessage(ctx *MessageContext) {
 func handleTextMessage(ctx *MessageContext) {
 	selfID := GlobalClient.Store.LID.User + "@lid"
 
-	for _, mention := range ctx.Mentions {
-		if mention == selfID {
-			SendTextMessage(GlobalClient, ctx.ChatID, "Soy ese") // TODO: Send random sticker
-			break
+	if ctx.Timestamp.After(BotStartTime) {
+		for _, mention := range ctx.Mentions {
+			if mention == selfID {
+				SendTextMessage(GlobalClient, ctx.ChatID, "Soy ese") // TODO: Send random sticker
+				break
+			}
 		}
 	}
+
+	err := GlobalAppDB.InsertMessageContext(
+		context.Background(),
+		ctx.MessageID,
+		ctx.ChatID.String(),
+		ctx.SenderName,
+		nil, // media description (nil for text)
+		&ctx.Text,
+		&ctx.Timestamp,
+	)
+	if err != nil {
+		fmt.Printf("Failed to insert message context: %v\n", err)
+	}
+
 }
 
 func handleCommands(ctx *MessageContext) {
+	if ctx.Timestamp.Before(BotStartTime) {
+		return
+	}
+
 	words := strings.Split(ctx.Text, " ")
 
 	switch words[0] {

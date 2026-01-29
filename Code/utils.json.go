@@ -19,8 +19,9 @@ type PromptsConfig struct {
 // DebugPrint prints the PromptsConfig in a pretty JSON format for debugging.
 //
 // Usage:
-//   pc, _ := ReadPromptsConfig("prompts.json")
-//   pc.DebugPrint()
+//
+//	pc, _ := ReadPromptsConfig("prompts.json")
+//	pc.DebugPrint()
 func (pc *PromptsConfig) DebugPrint() {
 	j, err := json.MarshalIndent(pc, "", "  ")
 	if err != nil {
@@ -28,7 +29,23 @@ func (pc *PromptsConfig) DebugPrint() {
 		return
 	}
 	fmt.Println("PromptsConfig DEBUG:")
-	fmt.Println(string(j))
+	lines := []byte(string(j))
+	start := 0
+	for i := 0; i < len(lines); i++ {
+		if lines[i] == '\n' || i == len(lines)-1 {
+			end := i
+			if i == len(lines)-1 {
+				end = i + 1
+			}
+			row := string(lines[start:end])
+			if len(row) > 40 {
+				fmt.Println(row[:40] + "...")
+			} else {
+				fmt.Println(row)
+			}
+			start = i + 1
+		}
+	}
 }
 
 // Config represents the main configuration JSON structure
@@ -42,8 +59,9 @@ type Config struct {
 // DebugPrint prints the Config in a pretty JSON format for debugging.
 //
 // Usage:
-//   cfg, _ := ReadConfig("config.json")
-//   cfg.DebugPrint()
+//
+//	cfg, _ := ReadConfig("config.json")
+//	cfg.DebugPrint()
 func (c *Config) DebugPrint() {
 	j, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
@@ -51,7 +69,23 @@ func (c *Config) DebugPrint() {
 		return
 	}
 	fmt.Println("Config DEBUG:")
-	fmt.Println(string(j))
+	lines := []byte(string(j))
+	start := 0
+	for i := 0; i < len(lines); i++ {
+		if lines[i] == '\n' || i == len(lines)-1 {
+			end := i
+			if i == len(lines)-1 {
+				end = i + 1
+			}
+			row := string(lines[start:end])
+			if len(row) > 40 {
+				fmt.Println(row[:40] + "...")
+			} else {
+				fmt.Println(row)
+			}
+			start = i + 1
+		}
+	}
 }
 
 // ReadPromptsConfig reads and parses a prompts configuration JSON file
@@ -86,7 +120,7 @@ func ReadConfig(filePath string) (*Config, error) {
 	return &config, nil
 }
 
-func WriteConfig(filePath string) (error) {
+func WriteConfig(filePath string) error {
 	// TODO: implement file write
 	return nil
 }

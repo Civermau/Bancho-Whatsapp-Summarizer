@@ -5,22 +5,26 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"go.mau.fi/whatsmeow"
 )
 
 var (
-	GlobalConfig        *Config
-	GlobalPromptsConfig *PromptsConfig
-	GlobalClient        *whatsmeow.Client
-	GlobalAppDB         *AppDB
-	GlobalWhitelistCache *WhitelistCache
-	GlobalAliasCache     *AliasCache
+	GlobalConfig                *Config
+	GlobalPromptsConfig         *PromptsConfig
+	GlobalClient                *whatsmeow.Client
+	GlobalAppDB                 *AppDB
+	GlobalWhitelistCache        *WhitelistCache
+	GlobalAliasCache            *AliasCache
 	GlobalImageDescriptionCache *ImageDescriptionCache
+
+	BotStartTime time.Time
 )
 
 func main() {
 	ctx := context.Background()
+	BotStartTime = time.Now()
 
 	var err error
 	GlobalConfig, err = ReadConfig("config.json")
