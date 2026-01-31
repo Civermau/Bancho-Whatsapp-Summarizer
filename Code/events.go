@@ -62,7 +62,7 @@ func handleImageMessage(ctx *MessageContext) {
 		description = "Processing image..."
 		_ = setNewImageCache(GlobalImageDescriptionCache, ctx.MediaMeta.Hash, description, GlobalAppDB)
 	} else {
-		description = "I was found in cache :D"
+		description = "I was found in cache :D" // ! delete later, this should do nothing, this is for testing purposes
 	}
 
 	err = GlobalAppDB.InsertMessageContext(
@@ -70,6 +70,7 @@ func handleImageMessage(ctx *MessageContext) {
 		ctx.MessageID,
 		ctx.ChatID.String(),
 		ctx.SenderName,
+		ctx.SenderID.String(),
 		&description,
 		nil,
 		&ctx.Timestamp,
@@ -127,6 +128,7 @@ func handleTextMessage(ctx *MessageContext) {
 		ctx.MessageID,
 		ctx.ChatID.String(),
 		ctx.SenderName,
+		ctx.SenderID.String(),
 		nil, // media description (nil for text)
 		&ctx.Text,
 		&ctx.Timestamp,
@@ -215,12 +217,11 @@ func handleAliasCommand(ctx *MessageContext, words []string) {
 		return
 	}
 
-	dbCtx := context.Background()
 	chatJID := ctx.ChatID.String()
 	senderJID := ctx.SenderID.String()
 	alias := words[1]
 
-	if err := GlobalAppDB.SetAlias(dbCtx, chatJID, senderJID, alias); err != nil {
+	if err := setNewAliasCache(GlobalAliasCache, chatJID, senderJID, alias, GlobalAppDB); err != nil {
 		SendReplyMessage(GlobalClient, ctx, "Failed to save alias")
 		return
 	}

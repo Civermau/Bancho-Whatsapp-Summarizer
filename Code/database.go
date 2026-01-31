@@ -334,13 +334,19 @@ func (a *AppDB) GetImageDescription(ctx context.Context, id string) (string, err
 
 // --- Message Context methods ---
 
-func (a *AppDB) InsertMessageContext(ctx context.Context, messageID string, chatID string, senderName string, mediaDescription *string, text *string, timestamp *time.Time) error {
+func (a *AppDB) InsertMessageContext(ctx context.Context, messageID string, chatID string, senderName string, senderID string, mediaDescription *string, text *string, timestamp *time.Time) error {
 	if a == nil || a.db == nil {
 		return errors.New("db is nil")
 	}
 	messageID = strings.TrimSpace(messageID)
 	chatID = strings.TrimSpace(chatID)
-	senderName = strings.TrimSpace(senderName)
+
+	senderName, err := isAliasCached(GlobalAliasCache, chatID, senderID, GlobalAppDB)
+	isCacheMiss := err != nil || senderName == ""
+
+	if isCacheMiss {
+		setNewAliasCache(GlobalAliasCache, chatID, senderID, senderName, GlobalAppDB)
+	}
 
 	if messageID == "" || chatID == "" || senderName == "" {
 		return errors.New("messageID, chatID and senderName are required")
@@ -363,7 +369,7 @@ func (a *AppDB) InsertMessageContext(ctx context.Context, messageID string, chat
 			text = excluded.text,
 			timestamp = excluded.timestamp
 	`
-	_, err := a.db.ExecContext(ctx, query, messageID, chatID, senderName, mediaDescription, text, timestamp)
+	_, err = a.db.ExecContext(ctx, query, messageID, chatID, senderName, mediaDescription, text, timestamp)
 	return err
 }
 

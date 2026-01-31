@@ -34,9 +34,9 @@ func setNewImageCache(imgCache *ImageDescriptionCache, hash string, description 
 
 // isAliasCached checks the in-memory alias cache for a (chatJID, senderJID) pair.
 // If not present, it falls back to the database and, on hit, populates the cache.
-func isAliasCached(aliasCache *AliasCache, chatJID, senderJID string, db *AppDB) (string, bool, error) {
+func isAliasCached(aliasCache *AliasCache, chatJID, senderJID string, db *AppDB) (string, error) {
 	if aliasCache == nil {
-		return "", false, nil
+		return "", nil
 	}
 
 	key := chatJID + "|" + senderJID
@@ -46,22 +46,22 @@ func isAliasCached(aliasCache *AliasCache, chatJID, senderJID string, db *AppDB)
 	aliasCache.mu.RUnlock()
 
 	if ok {
-		return alias, true, nil
+		return alias, nil
 	}
 
 	dbAlias, found, err := db.GetAlias(context.Background(), chatJID, senderJID)
 	if err != nil {
-		return "", false, err
+		return "", err
 	}
 	if !found {
-		return "", false, nil
+		return "", nil
 	}
 
 	aliasCache.mu.Lock()
 	aliasCache.aliases[key] = dbAlias
 	aliasCache.mu.Unlock()
 
-	return dbAlias, true, nil
+	return dbAlias, nil
 }
 
 // setNewAliasCache updates the in-memory alias cache and persists it to the database.
