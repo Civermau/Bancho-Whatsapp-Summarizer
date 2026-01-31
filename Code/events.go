@@ -98,13 +98,65 @@ func handleImageMessage(ctx *MessageContext) {
 // handleVideoMessage handles incoming video messages.
 func handleVideoMessage(ctx *MessageContext) {
 	fmt.Print("VIDEO DETECTED\n")
-	// TODO: Process video message (e.g., save video info, respond, etc.)
+
+	description := "Processing video..."
+
+	err := GlobalAppDB.InsertMessageContext(
+		context.Background(),
+		ctx.MessageID,
+		ctx.ChatID.String(),
+		ctx.SenderName,
+		ctx.SenderID.String(),
+		&description,
+		nil,
+		&ctx.Timestamp,
+	)
+	if err != nil {
+		fmt.Printf("Failed to insert video message context: %v\n", err)
+		return
+	}
+
+	go func(msgID string) {
+		time.Sleep(10 * time.Second)                     // Dummy: simulate processing
+		apiResponse := "Omg I am the video api, umazing" // Dummy API response
+
+		err := GlobalAppDB.UpdateMessageContextMediaDescription(context.Background(), msgID, apiResponse)
+		if err != nil {
+			fmt.Printf("Failed to update video description: %v\n", err)
+		}
+	}(ctx.MessageID)
 }
 
 // handleAudioMessage handles incoming audio messages.
 func handleAudioMessage(ctx *MessageContext) {
 	fmt.Print("AUDIO DETECTED\n")
-	// TODO: Process audio message (e.g., transcribe, respond, etc.)
+
+	description := "Processing audio..."
+
+	err := GlobalAppDB.InsertMessageContext(
+		context.Background(),
+		ctx.MessageID,
+		ctx.ChatID.String(),
+		ctx.SenderName,
+		ctx.SenderID.String(),
+		&description,
+		nil,
+		&ctx.Timestamp,
+	)
+	if err != nil {
+		fmt.Printf("Failed to insert audio message context: %v\n", err)
+		return
+	}
+
+	go func(msgID string) {
+		time.Sleep(10 * time.Second)                   // Dummy: simulate processing
+		apiResponse := "Yooo, even audios?? fantastic" // Dummy API response
+
+		err := GlobalAppDB.UpdateMessageContextMediaDescription(context.Background(), msgID, apiResponse)
+		if err != nil {
+			fmt.Printf("Failed to update audio description: %v\n", err)
+		}
+	}(ctx.MessageID)
 }
 
 // ? -----------------------------------------------------------------------------------------------------
